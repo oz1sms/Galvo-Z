@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#define MKS_RS485_ID 1
+#define MKS_RS485_ID 0x01
 #define MKS_RS485_BAUD 38400
 #define STEPS_PER_MM 400.0
 
@@ -14,14 +14,15 @@ class RS485Motor {
     float _currentPosition;
     bool _isHomed;
 
-    uint8_t calcChecksum(uint8_t* data, int len);
-    void sendFrame(uint8_t* frame, int len);
+    uint8_t calcCRC(uint8_t* data, int len);
+    void sendPacket(uint8_t* data, int len);
     bool waitForMoveComplete(unsigned long timeoutMs = 15000);
 
   public:
-    RS485Motor(int tx_pin, int rx_pin);
+    RS485Motor(int tx_pin = -1, int rx_pin = -1);
     void begin();
     void setEnable(bool enable);
+    bool calibrateMotor();
     void home();
     bool isHomed();
     void moveRelative(float distance, int speed);
@@ -29,7 +30,6 @@ class RS485Motor {
     void emergencyStop();
     float getPosition();
     void setCurrentPosition(float position);
-    bool calibrateMotor();
 };
 
 #endif
