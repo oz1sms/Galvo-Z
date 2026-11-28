@@ -1,6 +1,6 @@
 #include "Display.h"
 
-Display::Display() : u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE) {
+Display::Display() {
     _lastMenuIndex = -1;
     _lastZPosition = -999.0;
     _currentScreen = -1;

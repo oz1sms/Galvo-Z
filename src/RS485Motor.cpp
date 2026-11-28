@@ -23,8 +23,18 @@ void RS485Motor::sendPacket(uint8_t* data, int len) {
         Serial2.read();
     }
 
+    #ifdef PIN_RS485_DE
+      digitalWrite(PIN_RS485_DE, HIGH);
+      delayMicroseconds(50);
+    #endif
+
     Serial2.write(data, len);
     Serial2.flush(); // Wait until all bytes have physically left the UART TX buffer
+
+    #ifdef PIN_RS485_DE
+      delayMicroseconds(50);
+      digitalWrite(PIN_RS485_DE, LOW);
+    #endif
 }
 
 bool RS485Motor::waitForMoveComplete(unsigned long timeoutMs) {
@@ -62,6 +72,11 @@ bool RS485Motor::waitForMoveComplete(unsigned long timeoutMs) {
 }
 
 void RS485Motor::begin() {
+    #ifdef PIN_RS485_DE
+      pinMode(PIN_RS485_DE, OUTPUT);
+      digitalWrite(PIN_RS485_DE, LOW); // Default to receive mode
+    #endif
+
     // ESP32 Serial2.begin signature: (baud, config, rxPin, txPin)
     Serial2.begin(MKS_RS485_BAUD, SERIAL_8N1, _rx_pin, _tx_pin);
     delay(100);
@@ -170,7 +185,7 @@ void RS485Motor::emergencyStop() {
 }
 
 void RS485Motor::home() {
-    pinMode(PIN_LIMIT_TOP, INPUT);
+    pinMode(PIN_LIMIT_TOP, INPUT_PULLUP);
 
     // 1. SAFETY: Back off if limit switch is already triggered
     int safetyCounter = 0;

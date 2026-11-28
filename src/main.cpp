@@ -3,17 +3,16 @@
 #include "Pins.h"
 #include "Encoder.h"
 #include "Display.h"
+#include "EngravingTrigger.h"
 
 // ==========================================
 // MOTOR HARDWARE SETUP
 // ==========================================
 #define MOTOR_TYPE_DUMMY  0
-#define MOTOR_TYPE_CAN    1
-#define MOTOR_TYPE_ESD    2
-#define MOTOR_TYPE_RS485  3
+#define MOTOR_TYPE_ESD    1
+#define MOTOR_TYPE_RS485  2
 
 // #define ACTIVE_MOTOR MOTOR_TYPE_DUMMY
-// #define ACTIVE_MOTOR MOTOR_TYPE_CAN
 // #define ACTIVE_MOTOR MOTOR_TYPE_ESD
 #define ACTIVE_MOTOR MOTOR_TYPE_RS485
 
@@ -21,10 +20,7 @@
 
 #if ACTIVE_MOTOR == MOTOR_TYPE_DUMMY
   #include "DummyMotor.h"
-  DummyMotor z_axis(PIN_CAN_TX, PIN_CAN_RX);
-#elif ACTIVE_MOTOR == MOTOR_TYPE_CAN
-  #include "CanMotor.h"
-  CanMotor z_axis(PIN_CAN_TX, PIN_CAN_RX);
+  DummyMotor z_axis(0, 0);
 #elif ACTIVE_MOTOR == MOTOR_TYPE_ESD
   #include "ESDMotor.h"
   ESDMotor z_axis(PIN_ESD_EN, PIN_ESD_STEP, PIN_ESD_DIR);
@@ -34,6 +30,7 @@
 #endif
 
 Encoder encoderBtn(PIN_ENC_A, PIN_ENC_B, PIN_ENC_BTN); 
+EngravingTrigger engravingTrigger(PIN_PEDAL_BTN, PIN_LASER_RELAY, true, 50);
 Display oled;
 Preferences nvram; 
 
@@ -50,7 +47,7 @@ const char* menuItems[MENU_ITEMS_COUNT] = {
   "6. Setup / Calibrate"
 };
 
-#if (ACTIVE_MOTOR == MOTOR_TYPE_RS485 || ACTIVE_MOTOR == MOTOR_TYPE_CAN)
+#if (ACTIVE_MOTOR == MOTOR_TYPE_RS485)
   const int SETUP_MENU_COUNT = 7;
   const char* setupMenuItems[SETUP_MENU_COUNT] = {
     "1. Calibrate Max H",
@@ -222,6 +219,7 @@ void setup() {
   }
 
   encoderBtn.begin();
+  engravingTrigger.begin();
   oled.begin();
   z_axis.begin(); 
   
@@ -230,6 +228,7 @@ void setup() {
 
 void loop() {
   encoderBtn.update(); 
+  engravingTrigger.update();
 
   bool btnClicked   = encoderBtn.isButtonClicked();
   bool rotatedRight = encoderBtn.isRotatedRight();
@@ -404,6 +403,9 @@ void loop() {
               if (lowerLimit < (materialHeight + 5.0)) lowerLimit = materialHeight + 5.0;
               if (autoTargetZ < lowerLimit) autoTargetZ = lowerLimit;
 
+              // Send a single 150 ms pedal pulse to start LightBurn
+              engravingTrigger.triggerStart(150);
+
               currentState = STATE_3D_AUTO_RUNNING;
           }
       }
@@ -524,7 +526,7 @@ void loop() {
         if (setupMenuIndex == 3) currentState = STATE_WIZ_WELCOME; 
         if (setupMenuIndex == 4) currentState = STATE_CALIBRATE_FOCUS;
 
-      #if (ACTIVE_MOTOR == MOTOR_TYPE_RS485 || ACTIVE_MOTOR == MOTOR_TYPE_CAN)
+      #if (ACTIVE_MOTOR == MOTOR_TYPE_RS485)
         if (setupMenuIndex == 5) {
             confirmSaveYes = false; // Default to NO for safety
             currentState = STATE_CONFIRM_CALIB_MOTOR;
@@ -669,7 +671,7 @@ void loop() {
       }
       break;
 
-    #if (ACTIVE_MOTOR == MOTOR_TYPE_RS485 || ACTIVE_MOTOR == MOTOR_TYPE_CAN)
+    #if (ACTIVE_MOTOR == MOTOR_TYPE_RS485)
     case STATE_CONFIRM_CALIB_MOTOR:
       if (rotatedRight || rotatedLeft) confirmSaveYes = !confirmSaveYes;
 

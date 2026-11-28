@@ -3,19 +3,18 @@
 
 #include <Arduino.h>
 #include <U8g2lib.h>
-#include <Wire.h>
 #include "Pins.h"
 
 class Display {
   private:
-    // Hardware I2C remapped to custom pins defined in Pins.h (SCL: GPIO 19, SDA: GPIO 18)
-    // Note: Change to U8G2_SSD1309_128X64_NONAME0_F_HW_I2C if using a 2.42" SSD1309 display
-    U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2{
-        U8G2_R0,
-        /* reset=*/ U8X8_PIN_NONE,
-        /* clock=*/ PIN_OLED_SCL,
-        /* data=*/  PIN_OLED_SDA
-    };
+    // 2.42" SSD1309 128x64 OLED over Software I2C (SCL: GPIO 19, SDA: GPIO 18)
+    // If your SSD1309 module has a dedicated RES pin connected to a GPIO, replace U8X8_PIN_NONE with that pin (e.g., 16)
+    
+    U8G2_SSD1309_128X64_NONAME0_F_HW_I2C u8g2{
+      U8G2_R0,
+       /* reset=*/ U8X8_PIN_NONE, 
+       /* clock=*/ PIN_OLED_SCL, 
+       /* data=*/ PIN_OLED_SDA};
 
     int _lastMenuIndex;
     float _lastZPosition;
