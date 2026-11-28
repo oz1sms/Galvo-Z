@@ -31,7 +31,7 @@
   // --- Motor Driver: RS485 (Onboard Transceiver) ---
   #define PIN_RS485_TX     22
   #define PIN_RS485_RX     21
-  #define PIN_RS485_DE_RE  17
+  #define PIN_RS485_DE     17
 
   // --- Motor Driver: ESD (Step / Dir / Enable) ---
   #define PIN_ESD_EN       14
